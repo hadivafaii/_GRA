@@ -95,16 +95,16 @@ class RelativisticLion(torch.optim.Optimizer):
 					p.mul_(1 - lr * wd)
 
 				# 2. Interpolation: c_t = β₁·m_{t-1} + (1-β₁)·g_t
-				c_t = exp_avg.clone().mul_(beta1).add_(
-					grad, alpha=1 - beta1)
+				c_t = exp_avg.mul(beta1).add_(grad, alpha=1 - beta1)
+				# c_t = exp_avg.clone().mul_(beta1).add_(
+				# 	grad, alpha=1 - beta1)
 
 				# 3. Relativistic Velocity: v = c_t / √(c_t² + ρ²)
 				if mass == 0:
 					update = torch.sign(c_t)
 				else:
-					rho_tensor = torch.tensor(
-						rho, device=p.device, dtype=p.dtype)
-					update = c_t / torch.hypot(c_t, rho_tensor)
+					rho_t = c_t.new_tensor(rho)
+					update = c_t / torch.hypot(c_t, rho_t)
 					# update = c_t / torch.sqrt(c_t.square() + rho ** 2)
 
 				# 4. Parameter Update: θ_t = θ_{t-1} - η·v_t

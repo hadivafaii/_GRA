@@ -127,6 +127,12 @@ def tensor_size(x: torch.Tensor, unit='gb'):
 		])
 		raise ValueError(msg)
 
+def smooth_1d(y: np.ndarray, k: int) -> np.ndarray:
+	if k is None or k <= 1:
+		return y
+	w = np.ones(int(k), dtype=np.float64) / float(k)
+	return np.convolve(y, w, mode="same")
+
 
 def int_from_str(s: str) -> int:
 	matches = re.search(r"\d+", s)
