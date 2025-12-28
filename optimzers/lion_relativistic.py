@@ -16,7 +16,6 @@ class RelativisticLion(torch.optim.Optimizer):
 		mass: Rest mass of the particle. Controls smoothness of saturation.
 			mass=0: Exact sign() operation (standard Lion, massless limit)
 			mass>0: Smooth saturation (Massive Lion)
-		use_curvature: Whether to apply curvature correction to momentum
 
 	Physical correspondence (with Δt = 1):
 		- c = η (speed of light = learning rate)
@@ -31,8 +30,8 @@ class RelativisticLion(torch.optim.Optimizer):
 	"""
 
 	def __init__(
-			self, params, lr=1e-3, betas=(0.9, 0.99), weight_decay=0.0,
-			mass=0.0, use_curvature=False
+			self, params, lr=1e-3, betas=(0.9, 0.99),
+			weight_decay=0.0, mass=0.0,
 	):
 		if not 0.0 <= lr:
 			raise ValueError(f"Invalid learning rate: {lr}")
@@ -48,7 +47,6 @@ class RelativisticLion(torch.optim.Optimizer):
 			betas=betas,
 			weight_decay=weight_decay,
 			mass=mass,
-			use_curvature=use_curvature,
 			# rho=mass * lr * (1 - betas[1]),
 			# kappa=(1 - betas[0]) / betas[0],
 		)
@@ -66,10 +64,7 @@ class RelativisticLion(torch.optim.Optimizer):
 			beta1, beta2 = group['betas']
 			wd = group['weight_decay']
 			mass = group['mass']
-			use_curvature = group['use_curvature']
-			# handle rho & kappa
 			rho = mass * lr * (1 - beta2)
-			kappa = (1 - beta1) / beta1
 
 			for p in group['params']:
 				if p.grad is None:
@@ -83,9 +78,6 @@ class RelativisticLion(torch.optim.Optimizer):
 					state['step'] = 0
 					state['exp_avg'] = torch.zeros_like(
 						p, memory_format=torch.preserve_format)
-					if use_curvature:
-						state['prev_grad'] = torch.zeros_like(
-							p, memory_format=torch.preserve_format)
 
 				state['step'] += 1
 				exp_avg = state['exp_avg']
@@ -112,16 +104,5 @@ class RelativisticLion(torch.optim.Optimizer):
 
 				# 5. Momentum Update: m_t = β₂·m_{t-1} + (1-β₂)·g_t
 				exp_avg.mul_(beta2).add_(grad, alpha=1 - beta2)
-
-				# 6. Curvature Correction: m_t -= κ·(g_t - g_{t-1})
-				if use_curvature and state['step'] > 1:
-					exp_avg.add_(
-						grad - state['prev_grad'],
-						alpha=-kappa,
-					)
-
-				# 7. Store gradient for next curvature computation
-				if use_curvature:
-					state['prev_grad'].copy_(grad)
 
 		return loss
