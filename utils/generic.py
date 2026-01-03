@@ -127,11 +127,22 @@ def tensor_size(x: torch.Tensor, unit='gb'):
 		])
 		raise ValueError(msg)
 
-def smooth_1d(y: np.ndarray, k: int) -> np.ndarray:
-	if k is None or k <= 1:
-		return y
-	w = np.ones(int(k), dtype=np.float64) / float(k)
-	return np.convolve(y, w, mode="same")
+def smooth_savgol(
+		x: np.ndarray,
+		window: int,
+		polyorder: int = 3, ) -> np.ndarray:
+	if window is None or window <= 1:
+		return x
+	if window % 2 == 0:
+		window += 1
+	x_smooth = sp_sig.savgol_filter(
+		x=x,
+		window_length=min(window, len(x)
+		if len(y) % 2 == 1 else len(x) - 1),
+		polyorder=polyorder,
+		mode='interp',
+	)
+	return x_smooth
 
 
 def int_from_str(s: str) -> int:

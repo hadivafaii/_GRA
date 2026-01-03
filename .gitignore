@@ -5,3 +5,7 @@ __pycache__/
 .DS_Store
 .ipynb_checkpoints
 /.ipynb_checkpoints/
+# nanoGPT large / generated
+/test/nanoGPT/data/
+/test/nanoGPT/out/
+

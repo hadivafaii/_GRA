@@ -82,6 +82,46 @@ class ConvNet(torch.nn.Module):
 		return self.classifier(self.features(x))
 
 
+
+class MLP(torch.nn.Module):
+	def __init__(
+			self,
+			num_classes: int = 10,
+			activation=torch.nn.SiLU,
+			dropout: float = 0.2,
+			in_shape=(1, 28, 28),   # MNIST
+	):
+		super().__init__()
+
+		act = lambda: _make_act(activation)
+
+		c, h, w = in_shape
+		in_dim = c * h * w
+
+		self.features = torch.nn.Sequential(
+			torch.nn.Flatten(),
+
+			torch.nn.Linear(in_dim, 512),
+			act(),
+			torch.nn.Dropout(dropout),
+
+			torch.nn.Linear(512, 256),
+			act(),
+			torch.nn.Dropout(dropout),
+
+			torch.nn.Linear(256, 128),
+			act(),
+		)
+
+		self.classifier = torch.nn.Sequential(
+			torch.nn.Dropout(dropout),
+			torch.nn.Linear(128, num_classes),
+		)
+
+	def forward(self, x):
+		return self.classifier(self.features(x))
+
+
 def _make_act(act_cls):
 	try:
 		return act_cls(inplace=True)
